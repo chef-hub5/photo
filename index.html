@@ -281,36 +281,35 @@
                     <div>
                         <div class="bg-gray-50 p-8 rounded-lg">
                             <h3 class="text-2xl font-bold text-gray-800 mb-6">Send a Message</h3>
-                            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">
-                                <p class="text-sm"><strong>Demo Form:</strong> This is a sample contact form for demonstration purposes.</p>
-                            </div>
+
                             <form class="space-y-6">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label class="block text-gray-700 text-sm font-medium mb-2">First Name</label>
-                                        <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="John">
+                                        <input type="text" name="firstName" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="John" required>
                                     </div>
                                     <div>
                                         <label class="block text-gray-700 text-sm font-medium mb-2">Last Name</label>
-                                        <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Doe">
+                                        <input type="text" name="lastName" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Doe" required>
                                     </div>
                                 </div>
                                 <div>
                                     <label class="block text-gray-700 text-sm font-medium mb-2">Email</label>
-                                    <input type="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="john@example.com">
+                                    <input type="email" name="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="john@example.com" required>
                                 </div>
                                 <div>
                                     <label class="block text-gray-700 text-sm font-medium mb-2">Service Needed</label>
-                                    <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                        <option>Wedding Photography</option>
-                                        <option>Portrait Session</option>
-                                        <option>Event Photography</option>
-                                        <option>Other</option>
+                                    <select name="service" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                                        <option value="">Select a service...</option>
+                                        <option value="Wedding Photography">Wedding Photography</option>
+                                        <option value="Portrait Session">Portrait Session</option>
+                                        <option value="Event Photography">Event Photography</option>
+                                        <option value="Other">Other</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-gray-700 text-sm font-medium mb-2">Message</label>
-                                    <textarea rows="5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Tell me about your photography needs..."></textarea>
+                                    <textarea rows="5" name="message" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Tell me about your photography needs..." required></textarea>
                                 </div>
                                 <button type="submit" class="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-indigo-700 transition duration-300">
                                     Send Message
@@ -462,11 +461,102 @@
             });
         });
 
-        // Form submission (demo)
+        // Google Sheets Integration
+        // REPLACE THE URL BELOW WITH YOUR GOOGLE APPS SCRIPT WEB APP URL
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwZJb3QpiI7ypfOnttsRzYtExuB4FEZFOgLTeSxUxQZJJ3bdJkz36KAWd8RXKiE2MB8/exec';
+        
+        // Form submission with Google Sheets integration
         document.querySelector('form').addEventListener('submit', function(e) {
             e.preventDefault();
-            alert('Thank you for your message! This is a demo form - in a real website, this would send your message to the photographer.');
+            
+            // Show loading state
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            submitButton.textContent = 'Sending...';
+            submitButton.disabled = true;
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = {
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                email: formData.get('email'),
+                service: formData.get('service'),
+                message: formData.get('message'),
+                timestamp: new Date().toISOString()
+            };
+            
+            // Check if Google Script URL is configured
+            // if (GOOGLE_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbwZJb3QpiI7ypfOnttsRzYtExuB4FEZFOgLTeSxUxQZJJ3bdJkz36KAWd8RXKiE2MB8/exec') {
+            //     // Reset button state
+            //     submitButton.textContent = originalText;
+            //     submitButton.disabled = false;
+                
+            //     // Show configuration message
+            //     showMessage('Please configure your Google Apps Script URL to enable form submissions.', 'warning');
+            //     return;
+            // }
+            
+            // Submit to Google Sheets
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(() => {
+                showMessage('Thank you for your message! We will get back to you soon.', 'success');
+                this.reset(); // Clear the form
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                showMessage('There was an error sending your message. Please try again or contact us directly.', 'error');
+            })
+            .finally(() => {
+                // Reset button state
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
+            });
         });
+        
+        // Function to show messages
+        function showMessage(message, type) {
+            // Remove any existing message
+            const existingMessage = document.querySelector('.form-message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // Create message element
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'form-message px-4 py-3 rounded mb-6';
+            
+            // Set message style based on type
+            if (type === 'success') {
+                messageDiv.className += ' bg-green-100 border border-green-400 text-green-700';
+            } else if (type === 'error') {
+                messageDiv.className += ' bg-red-100 border border-red-400 text-red-700';
+            } else if (type === 'warning') {
+                messageDiv.className += ' bg-yellow-100 border border-yellow-400 text-yellow-700';
+            }
+            
+            messageDiv.innerHTML = `<p class="text-sm">${message}</p>`;
+            
+            // Insert message before the form
+            const form = document.querySelector('form');
+            form.parentNode.insertBefore(messageDiv, form);
+            
+            // Auto-remove success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.remove();
+                    }
+                }, 5000);
+            }
+        }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96bf0cda41ab71ed',t:'MTc1NDY1NjQ5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96bf7827d74c3616',t:'MTc1NDY2MDg4NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
